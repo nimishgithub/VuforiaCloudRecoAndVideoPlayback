@@ -33,10 +33,10 @@ countries.
 // take the appropriate steps to protect them within your application code
 // ----------------------------------------------------------------------------
 
-//static const char* const kAccessKey = "b3b58819edccca17755cfcae95ea0f40c0eaa0da"; //default
-//static const char* const kSecretKey = "4f2358936188b461ad608e50a82c1593d55cfeb0";
-static const char* const kAccessKey = "7ccef2730b1f8fee9794ed2138f01d72a23d8be2";
-static const char* const kSecretKey = "bd6348f3edddcc7ca27ef0d60c3ad77523e74958";
+static const char* const kAccessKey = "b3b58819edccca17755cfcae95ea0f40c0eaa0da"; //default
+static const char* const kSecretKey = "4f2358936188b461ad608e50a82c1593d55cfeb0";
+//static const char* const kAccessKey = "7ccef2730b1f8fee9794ed2138f01d72a23d8be2";
+//static const char* const kSecretKey = "bd6348f3edddcc7ca27ef0d60c3ad77523e74958";
 
 
 @interface BooksViewController ()
@@ -70,11 +70,11 @@ static const char* const kSecretKey = "bd6348f3edddcc7ca27ef0d60c3ad77523e74958"
         lastScannedBook = nil;
     }
     
-    if (bookOverlayController)
-    {
-        [bookOverlayController killTimer];
-        bookOverlayController = nil;
-    }
+//    if (bookOverlayController)
+//    {
+//        [bookOverlayController killTimer];
+//        bookOverlayController = nil;
+//    }
 }
 
 - (NSString *) lastTargetIDScanned
@@ -155,6 +155,9 @@ static const char* const kSecretKey = "bd6348f3edddcc7ca27ef0d60c3ad77523e74958"
         self.ARViewPlaceholder = nil;
     }*/
     
+    mFullScreenPlayerPlaying = NO;
+    mPlayFullscreenEnabled = NO;
+    
     pausedWhileShowingBookWebDetail = NO;
     isShowingWebDetail = NO;
     scanningMode = YES;
@@ -166,10 +169,10 @@ static const char* const kSecretKey = "bd6348f3edddcc7ca27ef0d60c3ad77523e74958"
     
     CGRect viewFrame = [self getCurrentARViewFrame];
     
-    bookOverlayController = [[BooksOverlayViewController alloc] initWithDelegate:self];
+//    bookOverlayController = [[BooksOverlayViewController alloc] initWithDelegate:self];
     eaglView = [[BooksEAGLView alloc] initWithFrame:viewFrame delegate:self appSession:vapp];
     [eaglView setBackgroundColor:UIColor.clearColor];
-    [eaglView addSubview:bookOverlayController.view];
+//    [eaglView addSubview:bookOverlayController.view];
     [self setView: eaglView];
     [AppDelegate shared].glResourceHandler = eaglView;
     
@@ -413,7 +416,7 @@ static const char* const kSecretKey = "bd6348f3edddcc7ca27ef0d60c3ad77523e74958"
     dispatch_async(dispatch_get_main_queue(), ^{
         // ensure overlay size and AR orientation is correct for screen orientation
         [self handleARViewRotation:[[UIApplication sharedApplication] statusBarOrientation]];
-        [self->bookOverlayController handleViewRotation:[[UIApplication sharedApplication] statusBarOrientation]];
+//        [self->bookOverlayController handleViewRotation:[[UIApplication sharedApplication] statusBarOrientation]];
         [self->vapp changeOrientation:[[UIApplication sharedApplication] statusBarOrientation]];
         [self->eaglView updateRenderingPrimitives];
     });
@@ -890,6 +893,23 @@ const int VIEW_SCAN_LINE_TAG = 1111;
 {
     [self scanlineStop];
     [self scanlineStart];
+}
+
+#pragma mark - Navigation
+
+// Present a view controller using the root view controller (eaglViewController)
+- (void)rootViewControllerPresentViewController:(UIViewController*)viewController inContext:(BOOL)currentContext
+{
+    mFullScreenPlayerPlaying = YES;
+    [self.navigationController pushViewController:viewController animated:YES];
+}
+
+// Dismiss a view controller presented by the root view controller
+// (eaglViewController)
+- (void)rootViewControllerDismissPresentedViewController
+{
+    mFullScreenPlayerPlaying = NO;
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 

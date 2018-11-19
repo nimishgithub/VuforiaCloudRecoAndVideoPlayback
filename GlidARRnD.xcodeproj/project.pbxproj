@@ -51,7 +51,6 @@
 		181ABFF2219BFE4300F9DC15 /* star_gray@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 181ABFD5219BFE4300F9DC15 /* star_gray@2x.png */; };
 		181ABFF3219BFE4300F9DC15 /* star_white~ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 181ABFD6219BFE4300F9DC15 /* star_white~ipad.png */; };
 		181ABFF4219BFE4300F9DC15 /* button_close_normal.png in Resources */ = {isa = PBXBuildFile; fileRef = 181ABFD7219BFE4300F9DC15 /* button_close_normal.png */; };
-		182B62DA21906F5E008ABB37 /* VideoPlaybackViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 182B62D921906F5E008ABB37 /* VideoPlaybackViewController.mm */; };
 		182B98F321903F9A0073FD99 /* ARViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 182B98F221903F9A0073FD99 /* ARViewController.swift */; };
 		1871C17C2199861000C248EE /* VuforiaSizzleReel_1.png in Resources */ = {isa = PBXBuildFile; fileRef = 1871C1512199861000C248EE /* VuforiaSizzleReel_1.png */; };
 		1871C17D2199861000C248EE /* VuforiaSizzleReel_2.png in Resources */ = {isa = PBXBuildFile; fileRef = 1871C1522199861000C248EE /* VuforiaSizzleReel_2.png */; };
@@ -84,7 +83,6 @@
 		18817EEE21902281006B48A1 /* Simple.fragsh in Resources */ = {isa = PBXBuildFile; fileRef = 18817EB521902280006B48A1 /* Simple.fragsh */; };
 		18817EEF21902281006B48A1 /* Simple.vertsh in Resources */ = {isa = PBXBuildFile; fileRef = 18817EB621902280006B48A1 /* Simple.vertsh */; };
 		18817EF021902281006B48A1 /* SampleAppRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 18817EBC21902280006B48A1 /* SampleAppRenderer.mm */; };
-		18817EF121902281006B48A1 /* VideoPlaybackEAGLView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 18817EBF21902280006B48A1 /* VideoPlaybackEAGLView.mm */; };
 		18817EF221902281006B48A1 /* VideoPlayerHelper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 18817EC321902280006B48A1 /* VideoPlayerHelper.mm */; };
 		18817EF321902281006B48A1 /* SampleMath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 18817EC421902280006B48A1 /* SampleMath.cpp */; };
 		18817F0A219024FA006B48A1 /* AVKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 18817F09219024FA006B48A1 /* AVKit.framework */; };
@@ -182,8 +180,6 @@
 		181ABFD5219BFE4300F9DC15 /* star_gray@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "star_gray@2x.png"; sourceTree = "<group>"; };
 		181ABFD6219BFE4300F9DC15 /* star_white~ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "star_white~ipad.png"; sourceTree = "<group>"; };
 		181ABFD7219BFE4300F9DC15 /* button_close_normal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = button_close_normal.png; sourceTree = "<group>"; };
-		182B62D821906F5E008ABB37 /* VideoPlaybackViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoPlaybackViewController.h; sourceTree = "<group>"; };
-		182B62D921906F5E008ABB37 /* VideoPlaybackViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoPlaybackViewController.mm; sourceTree = "<group>"; };
 		182B98F221903F9A0073FD99 /* ARViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARViewController.swift; sourceTree = "<group>"; };
 		185BA0C8219046D100CAEDBB /* GlidARRnD-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "GlidARRnD-Bridging-Header.h"; sourceTree = "<group>"; };
 		1871C1512199861000C248EE /* VuforiaSizzleReel_1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = VuforiaSizzleReel_1.png; sourceTree = "<group>"; };
@@ -228,9 +224,7 @@
 		18817EBA21902280006B48A1 /* SampleGLResourceHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SampleGLResourceHandler.h; sourceTree = "<group>"; };
 		18817EBB21902280006B48A1 /* SampleApplicationUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SampleApplicationUtils.h; sourceTree = "<group>"; };
 		18817EBC21902280006B48A1 /* SampleAppRenderer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SampleAppRenderer.mm; sourceTree = "<group>"; };
-		18817EBF21902280006B48A1 /* VideoPlaybackEAGLView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoPlaybackEAGLView.mm; sourceTree = "<group>"; };
 		18817EC021902280006B48A1 /* SampleMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SampleMath.h; sourceTree = "<group>"; };
-		18817EC121902280006B48A1 /* VideoPlaybackEAGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoPlaybackEAGLView.h; sourceTree = "<group>"; };
 		18817EC221902280006B48A1 /* VideoPlayerHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoPlayerHelper.h; sourceTree = "<group>"; };
 		18817EC321902280006B48A1 /* VideoPlayerHelper.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoPlayerHelper.mm; sourceTree = "<group>"; };
 		18817EC421902280006B48A1 /* SampleMath.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SampleMath.cpp; sourceTree = "<group>"; };
@@ -510,10 +504,6 @@
 		18817EBE21902280006B48A1 /* VideoPlayback */ = {
 			isa = PBXGroup;
 			children = (
-				182B62D821906F5E008ABB37 /* VideoPlaybackViewController.h */,
-				182B62D921906F5E008ABB37 /* VideoPlaybackViewController.mm */,
-				18817EBF21902280006B48A1 /* VideoPlaybackEAGLView.mm */,
-				18817EC121902280006B48A1 /* VideoPlaybackEAGLView.h */,
 				18817EC221902280006B48A1 /* VideoPlayerHelper.h */,
 				18817EC321902280006B48A1 /* VideoPlayerHelper.mm */,
 			);
@@ -667,11 +657,9 @@
 			files = (
 				18817EE821902281006B48A1 /* SampleApplicationSession.mm in Sources */,
 				181ABFB9219BFD9B00F9DC15 /* Transition3Dto2D.mm in Sources */,
-				18817EF121902281006B48A1 /* VideoPlaybackEAGLView.mm in Sources */,
 				181ABFB0219BFD9B00F9DC15 /* BooksManager.m in Sources */,
 				18817EF321902281006B48A1 /* SampleMath.cpp in Sources */,
 				181ABFB8219BFD9B00F9DC15 /* VuforiaHelper.mm in Sources */,
-				182B62DA21906F5E008ABB37 /* VideoPlaybackViewController.mm in Sources */,
 				18817EE521902281006B48A1 /* Texture.mm in Sources */,
 				181ABFAC219BFD9B00F9DC15 /* BooksViewController.mm in Sources */,
 				18817EE921902281006B48A1 /* SampleApplication3DModel.m in Sources */,

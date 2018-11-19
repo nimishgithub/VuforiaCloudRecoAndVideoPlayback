@@ -13,7 +13,7 @@
 #import <OpenGLES/ES2/gl.h>
 #import <OpenGLES/ES2/glext.h>
 
-@class VideoPlaybackViewController;
+@class BooksViewController;
 
 // Media states
 typedef enum tagMEDIA_STATE {
@@ -87,7 +87,7 @@ static const float VIDEO_PLAYBACK_CURRENT_POSITION = -1.0f;
     } mPlayerType;
 }
 
-- (id)initWithRootViewController:(VideoPlaybackViewController *) rootViewController;
+- (id)initWithRootViewController:(BooksViewController *) rootViewController;
 - (BOOL)load:(NSString*)filename playImmediately:(BOOL)playOnTextureImmediately fromPosition:(float)seekPosition;
 - (BOOL)unload;
 - (BOOL)isPlayableOnTexture;

@@ -60,15 +60,10 @@ static int RS_SCANNING = 3;
 static int RS_OVERLAY = 4;
 
 namespace {
-    // --- Data private to this unit ---
-    // Model scale factor
-    float kXObjectScale = 0.400f;
-    float kYObjectScale = 0.192;
-    const float kZObjectScale = 0.003f;
-    
+
     //Taken From VideoPlaybackEaglView
     // Texture filenames (an Object3D object is created for each texture)
-    const char* textureFilenames[kNumAugmentationTextures] = {
+    const char* textureFilenames[5] = {
         "icon_play.png",
         "icon_loading.png",
         "icon_error.png",
@@ -111,20 +106,6 @@ namespace {
     int touchedTarget = 0;
 }
 
-@implementation Object3D
-
-@synthesize numVertices;
-@synthesize vertices;
-@synthesize normals;
-@synthesize texCoords;
-@synthesize numIndices;
-@synthesize indices;
-@synthesize texture;
-
-@end
-
-
-
 @interface BooksEAGLView ()
 
 // private properties:
@@ -137,7 +118,7 @@ namespace {
 @property (nonatomic, assign) id<BooksControllerDelegateProtocol> booksDelegate;
 
 @property (nonatomic, assign) GLuint trackingTextureID;
-@property (nonatomic, strong) NSMutableArray *objects3D;  // objects to draw
+
 @property (nonatomic, readwrite) BOOL trackingTextureIDSet;
 
 @property (nonatomic, readwrite) BOOL trackingTextureAvailable;
@@ -195,33 +176,29 @@ namespace {
 //------------------------------------------------------------------------------
 #pragma mark - Lifecycle
 
-- (id)initWithFrame:(CGRect)frame  delegate:(id<BooksControllerDelegateProtocol>) delegate appSession:(SampleApplicationSession *) app
+- (id)initWithFrame:(CGRect)frame delegate:(id<BooksControllerDelegateProtocol>) delegate appSession:(SampleApplicationSession *) app
 {
     self = [super initWithFrame:frame];
     
     if (self)
     {
         vapp = app;
+        videoPlaybackViewController = (BooksViewController*)delegate;
+        
         booksDelegate = delegate;
-        
-        _objects3D = [[NSMutableArray alloc] initWithCapacity:2];
         _scanningMode = YES;
-        
         framebufferLock = [[NSLock alloc] init];
         //  Books variables
         _trackingTextureAvailable = NO;
         _isViewingTarget = NO;
         
-        
         // Enable retina mode if available on this device
         if (YES == [vapp isRetinaDisplay]) {
             [self setContentScaleFactor:[UIScreen mainScreen].nativeScale];
         }
-        
         // Load the "mock book cover" augmentation texture
         mockBookCoverTexture = [[Texture alloc] initWithImageFile:@"mock_book_cover.png"];
         
-
         // Create the OpenGL ES context
         context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
         
@@ -254,8 +231,6 @@ namespace {
         // Class data lock
         dataLock = [[NSLock alloc] init];
 
-        [self setup3dObjects];
-
         [sampleAppRenderer initRendering];
         [self initShaders];
     }
@@ -272,16 +247,14 @@ namespace {
 {
     // For each target, create a VideoPlayerHelper object and zero the
     // target dimensions
-    // For each target, create a VideoPlayerHelper object and zero the
-    // target dimensions
-    videoPlayerHelper = [[VideoPlayerHelper alloc] initWithRootViewController:videoPlaybackViewController];
     videoData.targetPositiveDimensions.data[0] = 0.0f;
     videoData.targetPositiveDimensions.data[1] = 0.0f;
     
     // Start video playback from the current position (the beginning) on the
     // first run of the app
     videoPlaybackTime = VIDEO_PLAYBACK_CURRENT_POSITION;
-    VideoPlayerHelper *player =  [self getVideoPlayerHelper:0];
+    videoPlayerHelper = [[VideoPlayerHelper alloc] initWithRootViewController: videoPlaybackViewController];
+    VideoPlayerHelper *player =  videoPlayerHelper;
     NSString* filename;
     filename = @"VuforiaSizzleReel_1.mp4";
     if (![player load:filename playImmediately:NO fromPosition: videoPlaybackTime])
@@ -309,23 +282,6 @@ namespace {
     }
     
     mockBookCoverTexture = nil;
-}
-
-- (void) setup3dObjects
-{
-    Object3D *obj3D = [[Object3D alloc] init];
-        
-    obj3D.numVertices = sizeof(planeVertices) / sizeof(planeVertices[0]); // 12
-    obj3D.vertices = planeVertices;
-    obj3D.normals = planeNormals;
-    obj3D.texCoords = planeTexcoords;
-        
-    obj3D.numIndices = sizeof(planeIndices) / sizeof(planeIndices[0]); // 6
-    obj3D.indices = planeIndices;
-        
-    obj3D.texture = mockBookCoverTexture;
-        
-    [self.objects3D addObject:obj3D];
 }
 
 
@@ -422,12 +378,6 @@ namespace {
     }
     
     [sampleAppRenderer renderFrameVuforia];
-}
-
-// Get a pointer to a VideoPlayerHelper object held by this EAGLView
-- (VideoPlayerHelper*)getVideoPlayerHelper:(int)index
-{
-    return videoPlayerHelper;
 }
 
 
@@ -791,6 +741,29 @@ namespace {
     
 }
 
+// Create the tracking lost timer
+- (void)createTrackingLostTimer
+{
+    trackingLostTimer = [NSTimer scheduledTimerWithTimeInterval:TRACKING_LOST_TIMEOUT target:self selector:@selector(trackingLostTimerFired:) userInfo:nil repeats:NO];
+}
+
+// Terminate the tracking lost timer
+- (void)terminateTrackingLostTimer
+{
+    [trackingLostTimer invalidate];
+    trackingLostTimer = nil;
+}
+
+// Tracking lost timer fired, pause video playback
+- (void)trackingLostTimerFired:(NSTimer*)timer
+{
+    // Tracking has been lost for TRACKING_LOST_TIMEOUT seconds, pause playback
+    // (we can safely do this on all our VideoPlayerHelpers objects)
+    
+    [videoPlayerHelper pause];
+    trackingLostTimer = nil;
+}
+
 
 -(void) endTransitionOnTargetLost
 {
@@ -916,7 +889,6 @@ namespace {
 {
     // setFramebuffer must have been called before presentFramebuffer, therefore
     // we know the context is valid and has been set for this (render) thread
-    
     // Bind the colour render buffer and present it
     glBindRenderbuffer(GL_RENDERBUFFER, colorRenderbuffer);
     
@@ -1168,7 +1140,6 @@ namespace {
     CFRelease(imageData);
     
     self.renderState = RS_OVERLAY;
-    
     // Books Sample Methods
     
 }

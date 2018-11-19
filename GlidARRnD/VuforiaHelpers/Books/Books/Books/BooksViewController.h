@@ -19,6 +19,9 @@ countries.
     id backgroundObserver;
     id activeObserver;
     int lastErrorCode;
+    BOOL mFullScreenPlayerPlaying;
+    // menu options
+    BOOL mPlayFullscreenEnabled;
 }
 
 @property (nonatomic, strong) BooksEAGLView* eaglView;
@@ -30,5 +33,9 @@ countries.
 @property (nonatomic, strong) BooksOverlayViewController * bookOverlayController;
 @property (nonatomic, weak) BookWebDetailViewController * bookWebDetailController;
 @property (nonatomic) Vuforia::TargetFinder* mTargetFinder;
+
+- (void)rootViewControllerPresentViewController:(UIViewController*)viewController inContext:(BOOL)currentContext;
+- (void)rootViewControllerDismissPresentedViewController;
+
 
 @end

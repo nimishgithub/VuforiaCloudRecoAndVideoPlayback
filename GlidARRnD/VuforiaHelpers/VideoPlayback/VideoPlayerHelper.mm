@@ -11,7 +11,7 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <AudioToolbox/AudioServices.h>
 
-#import "VideoPlaybackViewController.h"
+#import "BooksViewController.h"
 
 #ifdef DEBUG
 #define DEBUGLOG(x) NSLog(x)
@@ -48,7 +48,7 @@ static NSString* const kRateKey = @"rate";
 @interface VideoPlayerHelper ()
 
 // We don't own rootViewController, so we use "weak" property
-@property (nonatomic, weak) VideoPlaybackViewController * rootViewController;
+@property (nonatomic, weak) BooksViewController * rootViewController;
 @property (nonatomic, strong) AVPlayerViewController* movieViewController;
 @property (nonatomic, strong) AVPlayer* player;
 @property (nonatomic, strong) NSTimer* frameTimer;
@@ -87,7 +87,7 @@ static NSString* const kRateKey = @"rate";
 
 //------------------------------------------------------------------------------
 #pragma mark - Lifecycle
-- (id)initWithRootViewController:(VideoPlaybackViewController *) viewController
+- (id)initWithRootViewController:(BooksViewController *) viewController
 {
     self = [super init];
     

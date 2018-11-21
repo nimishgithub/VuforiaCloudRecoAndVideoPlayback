@@ -63,7 +63,7 @@ namespace {
 
     //Taken From VideoPlaybackEaglView
     // Texture filenames (an Object3D object is created for each texture)
-    const char* textureFilenames[5] = {
+    const char* textureFilenames[kNumAugmentationTextures] = {
         "icon_play.png",
         "icon_loading.png",
         "icon_error.png",
@@ -142,7 +142,7 @@ namespace {
 
 // Lock to prevent concurrent access of the framebuffer on the main and
 // render threads (layoutSubViews and renderFrameVuforia methods)
-@property (nonatomic, strong) NSLock *framebufferLock;
+//@property (nonatomic, strong) NSLock *framebufferLock;
 
 // Lock to synchronise data that is (potentially) accessed concurrently
 @property (nonatomic, strong) NSLock* dataLock;
@@ -162,7 +162,7 @@ namespace {
 
 @implementation BooksEAGLView
 
-@synthesize vapp, booksDelegate, dataLock, framebufferLock;
+@synthesize vapp, booksDelegate, dataLock;
 @synthesize mockBookCoverTexture, transition2Dto3D, transition3Dto2D, trackingTextureID;
 
 // You must implement this method, which ensures the view's underlying layer is
@@ -187,7 +187,7 @@ namespace {
         
         booksDelegate = delegate;
         _scanningMode = YES;
-        framebufferLock = [[NSLock alloc] init];
+//        framebufferLock = [[NSLock alloc] init];
         //  Books variables
         _trackingTextureAvailable = NO;
         _isViewingTarget = NO;
@@ -196,8 +196,12 @@ namespace {
         if (YES == [vapp isRetinaDisplay]) {
             [self setContentScaleFactor:[UIScreen mainScreen].nativeScale];
         }
-        // Load the "mock book cover" augmentation texture
-        mockBookCoverTexture = [[Texture alloc] initWithImageFile:@"mock_book_cover.png"];
+        
+        // Load the augmentation textures
+        for (int i = 0; i < kNumAugmentationTextures; ++i)
+        {
+            augmentationTexture[i] = [[Texture alloc] initWithImageFile:[NSString stringWithCString:textureFilenames[i] encoding:NSASCIIStringEncoding]];
+        }
         
         // Create the OpenGL ES context
         context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
@@ -209,25 +213,28 @@ namespace {
             [EAGLContext setCurrentContext:context];
         }
         
-        sampleAppRenderer = [[SampleAppRenderer alloc] initWithSampleAppRendererControl:self nearPlane:0.005 farPlane:5];
+//        sampleAppRenderer = [[SampleAppRenderer alloc] initWithSampleAppRendererControl:self nearPlane:0.005 farPlane:5];
+        sampleAppRenderer = [[SampleAppRenderer alloc] initWithSampleAppRendererControl:self nearPlane:0.01 farPlane:5];
         
         // Generate the OpenGL ES texture and upload the texture data for use
         // when rendering the augmentation
-        GLuint textureID;
-        glGenTextures(1, &textureID);
-        [mockBookCoverTexture setTextureID:textureID];
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, [mockBookCoverTexture width], [mockBookCoverTexture height], 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)[mockBookCoverTexture pngData]);
-        
-        // Set appropriate texture parameters (for NPOT textures)
-//        if (OBJECT_KEYFRAME_1 <= i)
-//        {
-//            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//        }
-
+        for (int i = 0; i < kNumAugmentationTextures; ++i)
+        {
+            GLuint textureID;
+            glGenTextures(1, &textureID);
+            [augmentationTexture[i] setTextureID:textureID];
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, [augmentationTexture[i] width], [augmentationTexture[i] height], 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)[augmentationTexture[i] pngData]);
+            
+            // Set appropriate texture parameters (for NPOT textures)
+            if (OBJECT_KEYFRAME_1 <= i)
+            {
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            }
+        }
         // Class data lock
         dataLock = [[NSLock alloc] init];
 
@@ -326,10 +333,10 @@ namespace {
     [self deleteFramebuffer];
     
     // Initialisation done once, or once per screen size change
-    [self initRendering];
+//    [self initRendering];
 }
 
-
+/*
 - (void)initRendering
 {
     BOOL isPortrait = false;
@@ -352,6 +359,7 @@ namespace {
     self.transitionDuration = 0.5f;
     trackableSize = Vuforia::Vec2F(0.0f, 0.0f);
 }
+ */
 
 
 - (void)setOrientationTransform:(CGAffineTransform)transform withLayerPosition:(CGPoint)pos
@@ -388,14 +396,7 @@ namespace {
 
 - (void)renderFrameWithState:(const Vuforia::State &)state projectMatrix:(Vuforia::Matrix44F &)projectionMatrix
 {
-    // test if the layout has changed
-    if (self.mDoLayoutSubviews)
-    {
-        [self doLayoutSubviews];
-        self.mDoLayoutSubviews = NO;
-    }
-    
-    [framebufferLock lock];
+//    [framebufferLock lock];
     [self setFramebuffer];
     
     // Clear colour and depth buffers
@@ -404,74 +405,39 @@ namespace {
     // Render video background and retrieve tracking state
     [sampleAppRenderer renderVideoBackgroundWithState:state];
     
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
-    // We must detect if background reflection is active and adjust the culling direction.
-    // If the reflection is active, this means the pose matrix has been reflected as well,
-    // therefore standard counter clockwise face culling will result in "inside out" models.
+    // We must detect if background reflection is active and adjust the culling
+    // direction.  If the reflection is active, this means the pose matrix has
+    // been reflected as well, therefore standard counter clockwise face culling
+    // will result in "inside out" models
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     
     // ----- Synchronise data access -----
     [dataLock lock];
     
+    // Assume the target is inactive (used when determining tap locations)
+    videoData.isActive = NO;
+    tapProjectionMatrix = projectionMatrix;
+    //        modelViewMatrix = Vuforia::Tool::convertPose2GLMatrix(trackableResult->getPose());
+    
     // Did we find any trackables this frame?
     if (!state.getTrackableResults().empty())
     {
-        //        // Get the trackable:
+        // Get the trackable:
         trackableResult = state.getTrackableResults().at(0);
-        modelViewMatrix = Vuforia::Tool::convertPose2GLMatrix(trackableResult->getPose());
-        // Assume the target is inactive (used when determining tap locations)
-        videoData.isActive = NO;
-        
-//                modelViewMatrix = projectionMatrix; // Done Above //TWEAK
-        
-        // Did we find any trackables this frame?
-        //                const auto& trackableResultList = state.getTrackableResults();
-        //                for (const auto* trackableResult : trackableResultList)
-        //                {
-//        const Vuforia::ImageTarget& imageTarget = (const Vuforia::ImageTarget&) trackableResult->getTrackable();
-//        assert(imageTarget.getType().isOfType(Vuforia::ImageTarget::getClassType()));
-        const Vuforia::Trackable& trackable = trackableResult->getTrackable();
-        assert(trackable.getType().isOfType(Vuforia::ImageTarget::getClassType()));
+        const Vuforia::ImageTarget& imageTarget = (const Vuforia::ImageTarget&) trackableResult->getTrackable();
+        // Mark this video (target) as active
+        videoData.isActive = YES;
         
         // Get the size of the ImageTarget
         Vuforia::ImageTargetResult *imageResult = (Vuforia::ImageTargetResult *)trackableResult;
         Vuforia::Vec3F targetSize = imageResult->getTrackable().getSize();
-        //                trackableSize.data[0] = targetSize.data[0];
-        //                trackableSize.data[1] = targetSize.data[1];
-       
-        // Mark this video (target) as active
-        videoData.isActive = YES;
-        
-        // Get the target size (used to determine if taps are within the target)
-        Vuforia::ImageTarget* imageTargetTrackable = (Vuforia::ImageTarget*)&trackable;
-        NSString *uniqueTargetId = [NSString stringWithUTF8String:imageTargetTrackable->getUniqueTargetId()];
-        
-        // we reset this transitional state
-        if (self.renderState == RS_OVERLAY)
-        {
-            self.renderState = RS_NORMAL;
-        }
-        
-        // If the last scanned book is different from the one it's scanning now
-        // and no network operation is active, then generate texture again
-        if (![[booksDelegate lastTargetIDScanned] isEqualToString:uniqueTargetId] && NO == [[BooksManager sharedInstance] isNetworkOperationInProgress])
-        {
-            [booksDelegate setLastTargetIDScanned:uniqueTargetId];
-            [self createContent:imageTargetTrackable];
-        }
-        else
-        {
-            return;
-        }
         
         if (targetSize.data[0] == 0.0f || targetSize.data[1] == 0.0f)
         {
-
-            
-            Vuforia::Vec3F size = imageResult->getTrackable().getSize();//imageTarget.getSize();
+            const Vuforia::ImageTarget& imageTarget = (const Vuforia::ImageTarget&) trackableResult->getTrackable();
+            Vuforia::Vec3F size = imageTarget.getSize();
             videoData.targetPositiveDimensions.data[0] = size.data[0];
             videoData.targetPositiveDimensions.data[1] = size.data[1];
             
@@ -486,6 +452,8 @@ namespace {
         
         // This matrix is used to calculate the location of the screen tap
         videoData.modelViewMatrix = Vuforia::Tool::convertPose2GLMatrix(trackablePose);
+        videoData.targetPositiveDimensions.data[0] = targetSize.data[0];
+        videoData.targetPositiveDimensions.data[1] = targetSize.data[1];
         
         float aspectRatio;
         const GLvoid* texCoords;
@@ -494,10 +462,16 @@ namespace {
         
         // Retain value between calls
         static GLuint videoTextureID = 0;
-        
         MEDIA_STATE currentStatus = [videoPlayerHelper getStatus];
         
-        // NSLog(@"MEDIA_STATE for %d is %d", playerIndex, currentStatus);
+       
+        const Vuforia::Trackable& trackable = trackableResult->getTrackable();
+        assert(trackable.getType().isOfType(Vuforia::ImageTarget::getClassType()));
+  
+        // Get the target size (used to determine if taps are within the target)
+        Vuforia::ImageTarget* imageTargetTrackable = (Vuforia::ImageTarget*)&trackable;
+        NSString *uniqueTargetId = [NSString stringWithUTF8String:imageTargetTrackable->getUniqueTargetId()];
+        
         
         // --- INFORMATION ---
         // One could trigger automatic playback of a video at this point.  This
@@ -559,7 +533,7 @@ namespace {
         else
         {
             // ----- Display the keyframe -----
-            Texture* t = mockBookCoverTexture;//[OBJECT_KEYFRAME_1 + playerIndex];
+            Texture* t = augmentationTexture[OBJECT_KEYFRAME_1];
             frameTextureID = [t textureID];
             aspectRatio = (float)[t height] / (float)[t width];
             texCoords = quadTexCoords;
@@ -685,59 +659,30 @@ namespace {
         }
         
         SampleApplicationUtils::checkGlError("VideoPlayback renderFrameVuforia");
-        //                }
-        
-        // --- INFORMATION ---
-        // One could pause automatic playback of a video at this point.  Simply call
-        // the pause method of the VideoPlayerHelper object without setting the
-        // timer (as below).
-        // --- END INFORMATION ---
-        
-        // If a video is playing on texture and we have lost tracking, create a
-        // timer on the main thread that will pause video playback after
-        // TRACKING_LOST_TIMEOUT seconds
-        if (nil == trackingLostTimer && NO == videoData.isActive && PLAYING == [videoPlayerHelper getStatus])
-        {
-            [self performSelectorOnMainThread:@selector(createTrackingLostTimer) withObject:nil waitUntilDone:YES];
-        }
     }
+ 
+    // --- INFORMATION ---
+    // One could pause automatic playback of a video at this point.  Simply call
+    // the pause method of the VideoPlayerHelper object without setting the
+    // timer (as below).
+    // --- END INFORMATION ---
     
-    if (self.renderState == RS_OVERLAY)
+    // If a video is playing on texture and we have lost tracking, create a
+    // timer on the main thread that will pause video playback after
+    // TRACKING_LOST_TIMEOUT seconds
+    if (nil == trackingLostTimer && NO == videoData.isActive && PLAYING == [videoPlayerHelper getStatus])
     {
-        // if the overlay view was displayed while no target was found, we
-        // need to trigger the event so that the targets shows up
-        self.renderState = RS_NORMAL;
-        self.isShowing2DOverlay = YES;
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"kTargetLost" object:nil userInfo:nil];
+        [self performSelectorOnMainThread:@selector(createTrackingLostTimer) withObject:nil waitUntilDone:YES];
     }
-    
-    if (self.isViewingTarget) // This means there was a target but we can't find it anymore
-    {
-        self.isViewingTarget = NO;
-        
-        // This needs to be called on main thread to make sure the thread doesn't die before the timer is called
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self targetLost];
-        });
-    }
-    //    }
-    //
+
     [dataLock unlock];
     // ----- End synchronise data access -----
     
-    
-    glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
-    
-    glDisableVertexAttribArray(vertexHandle);
-    glDisableVertexAttribArray(normalHandle);
-    glDisableVertexAttribArray(textureCoordHandle);
-    
-    
-    Vuforia::Renderer::getInstance().end();
+    glDisable(GL_CULL_FACE);
     
     [self presentFramebuffer];
-    [framebufferLock unlock];
+//    [framebufferLock unlock];
     
 }
 

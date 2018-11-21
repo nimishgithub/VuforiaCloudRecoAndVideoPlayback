@@ -21,24 +21,6 @@ countries.
 #import "VideoPlayerHelper.h"
 
 static const int kNumAugmentationTextures = 5;
-static const int kNumVideoTargets = 1;
-
-// structure to point to an object to be drawn
-//@interface Object3D : NSObject
-
-//@property (nonatomic) unsigned int numVertices;
-//@property (nonatomic) const float *vertices;
-//@property (nonatomic) const float *normals;
-//@property (nonatomic) const float *texCoords;
-//
-//@property (nonatomic) unsigned int numIndices;
-//@property (nonatomic) const unsigned short *indices;
-//
-//@property (nonatomic) Texture *texture;
-//
-//@end
-
-
 
 // Books is a subclass of UIView and conforms to the informal protocol
 // UIGLViewProtocol
@@ -71,6 +53,11 @@ static const int kNumVideoTargets = 1;
     Vuforia::Matrix34F pose;
     Vuforia::Matrix44F modelViewMatrix;
     
+    Vuforia::Matrix44F tapProjectionMatrix;
+    
+    // Texture used when rendering augmentation
+    Texture* augmentationTexture[kNumAugmentationTextures];
+    
     // Texture used when rendering augmentation
     SampleAppRenderer *sampleAppRenderer;
     
@@ -93,7 +80,6 @@ static const int kNumVideoTargets = 1;
     
     // indicates how the video will be played
     BOOL playVideoFullScreen;
-    
     
     // Lock to synchronise data that is (potentially) accessed concurrently
     NSLock* dataLock;

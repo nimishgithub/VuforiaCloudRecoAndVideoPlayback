@@ -12,6 +12,7 @@ countries.
 #import "SampleApplicationSession.h"
 //#import "SampleAppMenuViewController.h"
 #import <Vuforia/DataSet.h>
+#import <Vuforia/TargetFinder.h>
 
 @interface VideoPlaybackViewController : UIViewController <SampleApplicationControl> {
     Vuforia::DataSet*  mDataSet;
@@ -19,6 +20,7 @@ countries.
     
     // menu options
     BOOL mPlayFullscreenEnabled;
+    int lastErrorCode;
 }
 
 - (void)rootViewControllerPresentViewController:(UIViewController*)viewController inContext:(BOOL)currentContext;
@@ -27,6 +29,7 @@ countries.
 @property (nonatomic, strong) VideoPlaybackEAGLView* eaglView;
 @property (nonatomic, strong) UITapGestureRecognizer * tapGestureRecognizer;
 @property (nonatomic, strong) SampleApplicationSession * vapp;
+@property (nonatomic) Vuforia::TargetFinder* mTargetFinder;
 
 @property (nonatomic, readwrite) BOOL showingMenu;
 

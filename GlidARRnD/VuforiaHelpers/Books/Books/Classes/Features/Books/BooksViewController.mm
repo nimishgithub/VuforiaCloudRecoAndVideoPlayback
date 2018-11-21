@@ -33,7 +33,7 @@ countries.
 // take the appropriate steps to protect them within your application code
 // ----------------------------------------------------------------------------
 
-//static const char* const kAccessKey = "b3b58819edccca17755cfcae95ea0f40c0eaa0da"; //default
+//static const char* const kAccessKey = "b3b58819edccca17755cfcae95ea0f40c0eaa0da";
 //static const char* const kSecretKey = "4f2358936188b461ad608e50a82c1593d55cfeb0";
 static const char* const kAccessKey = "7ccef2730b1f8fee9794ed2138f01d72a23d8be2";
 static const char* const kSecretKey = "bd6348f3edddcc7ca27ef0d60c3ad77523e74958";
@@ -335,7 +335,6 @@ static const char* const kSecretKey = "bd6348f3edddcc7ca27ef0d60c3ad77523e74958"
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    [eaglView prepare];
     
     // we set the UINavigationControllerDelegate
     // so that we can enforce portrait only for this view controller

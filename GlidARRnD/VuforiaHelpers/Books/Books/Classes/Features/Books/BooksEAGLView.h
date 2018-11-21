@@ -18,10 +18,6 @@ countries.
 #import "ImagesManagerDelegateProtocol.h"
 #import "SampleGLResourceHandler.h"
 #import "SampleAppRenderer.h"
-#import "VideoPlayerHelper.h"
-
-static const int kNumAugmentationTextures = 5;
-static const int kNumVideoTargets = 1;
 
 // structure to point to an object to be drawn
 @interface Object3D : NSObject
@@ -44,7 +40,6 @@ static const int kNumVideoTargets = 1;
 // UIGLViewProtocol
 @interface BooksEAGLView : UIView <UIGLViewProtocol, BooksManagerDelegateProtocol, ImagesManagerDelegateProtocol, SampleGLResourceHandler, SampleAppRendererControl> {
 @private
-    
     // OpenGL ES context
     EAGLContext *context;
     
@@ -65,50 +60,15 @@ static const int kNumVideoTargets = 1;
     // ----------------------------------------------------------------------------
     // Trackable Data Global Variables
     // ----------------------------------------------------------------------------
-    
     const Vuforia::TrackableResult* trackableResult;
     Vuforia::Vec2F trackableSize;
     Vuforia::Matrix34F pose;
     Vuforia::Matrix44F modelViewMatrix;
     
-    // Texture used when rendering augmentation
     SampleAppRenderer *sampleAppRenderer;
-    
-    
-    // From VideoPlaybackEaglview---------------------
-    
-    // Instantiate one VideoPlayerHelper per target
-    VideoPlayerHelper *videoPlayerHelper;
-    float videoPlaybackTime;
-    
-    VideoPlaybackViewController * videoPlaybackViewController ;
-    
-    // Timer to pause on-texture video playback after tracking has been lost.
-    // Note: written/read on two threads, but never concurrently
-    NSTimer* trackingLostTimer;
-    
-    // Coordinates of user touch
-    float touchLocation_X;
-    float touchLocation_Y;
-    
-    // indicates how the video will be played
-    BOOL playVideoFullScreen;
-    
-    
-    // Lock to synchronise data that is (potentially) accessed concurrently
-    NSLock* dataLock;
-    
-
 }
 
 - (id)initWithFrame:(CGRect)frame  delegate:(id<BooksControllerDelegateProtocol>) delegate appSession:(SampleApplicationSession *) app;
-
-// From videoPlaybackEaglView
-- (void) willPlayVideoFullScreen:(BOOL) fullScreen;
-
-- (void) prepare;
-- (void) dismiss;
-// From videoPlaybackEaglView
 
 - (void)finishOpenGLESCommands;
 - (void)freeOpenGLESResources;

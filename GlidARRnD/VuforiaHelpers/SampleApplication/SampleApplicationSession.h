@@ -104,4 +104,5 @@ Copyright (c) 2016-2018 PTC Inc. All Rights Reserved.
 @property (nonatomic, readwrite) BOOL cameraIsStarted;
 @property (nonatomic, readwrite) BOOL isRetinaDisplay;
 
+
 @end

@@ -89,6 +89,9 @@ namespace {
         
         // Currently active flag
         BOOL isActive;
+        
+        NSString* remoteUrlString;
+        
     } videoData[kNumVideoTargets];
     
     int touchedTarget = 0;
@@ -196,14 +199,12 @@ namespace {
         videoData[i].targetPositiveDimensions.data[0] = 0.0f;
         videoData[i].targetPositiveDimensions.data[1] = 0.0f;
     }
-    
     // Start video playback from the current position (the beginning) on the
     // first run of the app
     for (int i = 0; i < kNumVideoTargets; ++i)
     {
         videoPlaybackTime[i] = VIDEO_PLAYBACK_CURRENT_POSITION;
     }
-    
     // For each video-augmented target
     for (int i = 0; i < kNumVideoTargets; ++i)
     {
@@ -211,7 +212,6 @@ namespace {
         // playing when the app went into the background
         VideoPlayerHelper* player = [self getVideoPlayerHelper:i];
         NSString* filename;
-        
         switch (i)
         {
             case 0:

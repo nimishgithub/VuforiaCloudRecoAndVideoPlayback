@@ -364,6 +364,7 @@ namespace {
     [self.delegate onInitARDone:nil];
 }
 
+
 - (void) changeOrientation:(UIInterfaceOrientation) ARViewOrientation {
     self.mARViewOrientation = ARViewOrientation;
     
@@ -568,5 +569,6 @@ void VuforiaApplication_UpdateCallback::Vuforia_onUpdate(Vuforia::State& state)
         [instance Vuforia_onUpdate:&state];
     }
 }
+
 
 @end

@@ -8,7 +8,6 @@ countries.
 ===============================================================================*/
 
 #import "VideoPlaybackViewController.h"
-//#import "VideoPlaybackAppDelegate.h"
 #import <Vuforia/Vuforia.h>
 #import <Vuforia/TrackerManager.h>
 #import <Vuforia/ObjectTracker.h>
@@ -16,12 +15,22 @@ countries.
 #import <Vuforia/DataSet.h>
 #import <Vuforia/CameraDevice.h>
 #import <GlidARRnD-Swift.h>
+#import "BooksManager.h"
 
-//#import "UnwindMenuSegue.h"
-//#import "PresentMenuSegue.h"
-//#import "SampleAppMenuViewController.h"
+
+#import <Vuforia/TargetFinder.h>
+#import <Vuforia/TargetSearchResult.h>
+#import <Vuforia/ImageTarget.h>
+
+//static const char* const kAccessKey = "b3b58819edccca17755cfcae95ea0f40c0eaa0da";
+//static const char* const kSecretKey = "4f2358936188b461ad608e50a82c1593d55cfeb0";
+static const char* const kAccessKey = "7ccef2730b1f8fee9794ed2138f01d72a23d8be2";
+static const char* const kSecretKey = "bd6348f3edddcc7ca27ef0d60c3ad77523e74958";
 
 @interface VideoPlaybackViewController ()
+
+@property (nonatomic) BOOL scanningMode;
+@property (nonatomic) BOOL isVisualSearchOn;
 
 @property (weak, nonatomic) IBOutlet UIImageView *ARViewPlaceholder;
 
@@ -29,17 +38,39 @@ countries.
 
 @implementation VideoPlaybackViewController
 
-@synthesize tapGestureRecognizer, vapp, eaglView;
+@synthesize tapGestureRecognizer, vapp, eaglView, mTargetFinder;
+@synthesize scanningMode, isVisualSearchOn;
 
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+- (BOOL) isVisualSearchOn
+{
+    return isVisualSearchOn;
+}
+
+- (void) setVisualSearchOn:(BOOL) isOn
+{
+    isVisualSearchOn = isOn;
+    
+    if (isOn)
+    {
+        [self scanlineStart];
+    }
+    else
+    {
+        [self scanlineStop];
+    }
+}
+
 - (void)loadView
 {
     // Custom initialization
     self.title = @"Video Playback";
+    scanningMode = YES;
+    isVisualSearchOn = NO;
 
     if (self.ARViewPlaceholder != nil)
     {
@@ -56,7 +87,6 @@ countries.
     [eaglView setBackgroundColor:UIColor.clearColor];
     [self setView:eaglView];
     [AppDelegate shared].glResourceHandler = eaglView;
-    
     // double tap used to also trigger the menu
     UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] initWithTarget: self action:@selector(doubleTapGestureAction:)];
     doubleTap.numberOfTapsRequired = 2;
@@ -69,6 +99,8 @@ countries.
     {
         [tapGestureRecognizer requireGestureRecognizerToFail:doubleTap];
     }
+    
+    [self scanlineCreate];
     
     UISwipeGestureRecognizer *swipeRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(swipeGestureAction:)];
     [swipeRight setDirection:UISwipeGestureRecognizerDirectionRight];
@@ -126,7 +158,7 @@ countries.
 {
     [super viewDidLoad];
     [eaglView prepare];
-    
+ 
     // we set the UINavigationControllerDelegate
     // so that we can enforce portrait only for this view controller
     self.navigationController.delegate = (id<UINavigationControllerDelegate>)self;
@@ -137,6 +169,7 @@ countries.
     [self.navigationController setNavigationBarHidden:YES animated:NO];
     [self.view addGestureRecognizer:tapGestureRecognizer];
     
+    lastErrorCode = 99;
     NSLog(@"self.navigationController.navigationBarHidden: %s", self.navigationController.navigationBarHidden ? "Yes" : "No");
 }
 
@@ -231,7 +264,7 @@ countries.
     }
     
     UIActivityIndicatorView *loadingIndicator = [[UIActivityIndicatorView alloc]
-                                                 initWithFrame:indicatorBounds];
+                                                  initWithFrame:indicatorBounds];
     
     loadingIndicator.tag  = 1;
     loadingIndicator.activityIndicatorViewStyle = UIActivityIndicatorViewStyleWhiteLarge;
@@ -265,7 +298,56 @@ countries.
 // load the data associated to the trackers
 - (bool) doLoadTrackersData
 {
-    return [self loadAndActivateImageTrackerDataSet:@"StonesAndChips.xml"];;
+//    return [self loadAndActivateImageTrackerDataSet:@"StonesAndChips.xml"];
+    Vuforia::TrackerManager& trackerManager = Vuforia::TrackerManager::getInstance();
+    Vuforia::ObjectTracker* objectTracker = static_cast<Vuforia::ObjectTracker*>(trackerManager.getTracker(Vuforia::ObjectTracker::getClassType()));
+    if (objectTracker == NULL)
+    {
+        NSLog(@"Failed to load tracking data set because the ObjectTracker has not been initialized.");
+        return false;
+    }
+    
+    // Initialize visual search:
+    NSDate *start = [NSDate date];
+    
+    Vuforia::TargetFinder* targetFinder = objectTracker->getTargetFinder();
+    
+    if (targetFinder == NULL)
+    {
+        NSLog(@"Failed to get target finder.");
+        return false;
+    }
+    
+    targetFinder->startInit(kAccessKey, kSecretKey);
+    
+    targetFinder->waitUntilInitFinished();
+    
+    NSDate *methodFinish = [NSDate date];
+    NSTimeInterval executionTime = [methodFinish timeIntervalSinceDate:start];
+    
+    NSLog(@"waitUntilInitFinished Execution Time: %lf", executionTime);
+    
+    int resultCode = targetFinder->getInitState();
+    if ( resultCode != Vuforia::TargetFinder::INIT_SUCCESS)
+    {
+        int initErrorCode;
+        if(resultCode == Vuforia::TargetFinder::INIT_ERROR_NO_NETWORK_CONNECTION)
+        {
+            initErrorCode = Vuforia::TargetFinder::UPDATE_ERROR_NO_NETWORK_CONNECTION;
+        }
+        else
+        {
+            initErrorCode = Vuforia::TargetFinder::UPDATE_ERROR_SERVICE_NOT_AVAILABLE;
+        }
+        [self showUIAlertFromErrorCode: initErrorCode];
+        return false;
+    }
+    else
+    {
+        NSLog(@"target finder initialized");
+    }
+    mTargetFinder = targetFinder;
+    return true;
 }
 
 // start the application trackers
@@ -281,6 +363,13 @@ countries.
         return false;
     }
     tracker->start();
+    
+    // Start cloud based recognition if we are in scanning mode:
+    if (scanningMode && mTargetFinder)
+    {
+        [self scanlineStart];
+        isVisualSearchOn = mTargetFinder->startRecognition();
+    }
     return true;
 }
 
@@ -341,7 +430,59 @@ countries.
 // update from the Vuforia loop
 - (void) onVuforiaUpdate: (Vuforia::State *) state
 {
+    // Get the target finder:
+    Vuforia::TargetFinder* finder = mTargetFinder;
+    
+    if (!finder)
+    {
+        NSLog(@"TargetFinder not initialized");
+        return;
+    }
+    
+    // Check if there are new results available:
+    const auto& queryResult = finder->updateQueryResults();
+    if (queryResult.status < 0)
+    {
+        // Show a message if we encountered an error:
+        NSLog(@"update search result failed:%d", queryResult.status);
+        if (queryResult.status == Vuforia::TargetFinder::UPDATE_ERROR_NO_NETWORK_CONNECTION)
+        {
+            [self showUIAlertFromErrorCode:queryResult.status];
+        }
+    }
+    else if (queryResult.status == Vuforia::TargetFinder::UPDATE_RESULTS_AVAILABLE)
+    {
+        // Iterate through the new results:
+        for (const auto* result : queryResult.results)
+        {
+            // Check if this target is suitable for tracking:
+            if (result->getTrackingRating() > 0)
+            {
+                // Create a new Trackable from the result:
+                Vuforia::Trackable* newTrackable = finder->enableTracking(*result);
+                if (newTrackable != 0)
+                {
+                    Vuforia::ImageTarget* imageTargetTrackable = (Vuforia::ImageTarget*)newTrackable;
+                    
+                    //  Avoid entering on ContentMode when a bad target is found
+                    //  (Bad Targets are targets that are exists on the Books database but not on our
+                    //  own book database)
+                    if (![[BooksManager sharedInstance] isBadTarget:imageTargetTrackable->getUniqueTargetId()])
+                    {
+                        NSLog(@"Successfully created new trackable '%s' with rating '%d', meta dataInfo %s.",
+                              newTrackable->getName(), result->getTrackingRating(), result->getMetaData());
+                    }
+                }
+                else
+                {
+                    NSLog(@"Failed to create new trackable.");
+                }
+            }
+        }
+    }
+    
 }
+
 
 // stop your trackerts
 - (bool) doStopTrackers
@@ -397,7 +538,13 @@ countries.
 - (bool) doDeinitTrackers
 {
     Vuforia::TrackerManager& trackerManager = Vuforia::TrackerManager::getInstance();
-    trackerManager.deinitTracker(Vuforia::ObjectTracker::getClassType());
+//    trackerManager.deinitTracker(Vuforia::ObjectTracker::getClassType());
+    Vuforia::Tracker* objectTracker = trackerManager.initTracker(Vuforia::ObjectTracker::getClassType());
+    if (objectTracker == nullptr)
+    {
+        NSLog(@"Failed to initialize ObjectTracker.");
+        return false;
+    }
     return true;
 }
 
@@ -541,24 +688,144 @@ countries.
     [self.navigationController popViewControllerAnimated:YES];
 }
 
-//- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-//    if ([segue isKindOfClass:[PresentMenuSegue class]])
-//    {
-//        UIViewController *dest = [segue destinationViewController];
-//        if ([dest isKindOfClass:[SampleAppMenuViewController class]])
-//        {
-//            self.showingMenu = YES;
-//
-//            SampleAppMenuViewController *menuVC = (SampleAppMenuViewController *)dest;
-//            menuVC.menuDelegate = self;
-//            menuVC.sampleAppFeatureName = @"Video Playback";
-//            menuVC.dismissItemName = @"About";
-//            menuVC.backSegueId = @"BackToVideoPlayback";
-//
-//            // initialize menu item values (ON / OFF)
-//            [menuVC setValue:mPlayFullscreenEnabled forMenuItem:@"Play Fullscreen"];
-//        }
-//    }
+-(void)showUIAlertFromErrorCode:(int)code
+{
+    if (lastErrorCode == code)
+    {
+        // we don't want to show twice the same error
+        return;
+    }
+    lastErrorCode = code;
+    
+    NSString *title = nil;
+    NSString *message = nil;
+    
+    if (code == Vuforia::TargetFinder::UPDATE_ERROR_NO_NETWORK_CONNECTION)
+    {
+        title = @"Network Unavailable";
+        message = @"Please check your internet connection and try again.";
+    }
+    else if (code == Vuforia::TargetFinder::UPDATE_ERROR_REQUEST_TIMEOUT)
+    {
+        title = @"Request Timeout";
+        message = @"The network request has timed out, please check your internet connection and try again.";
+    }
+    else if (code == Vuforia::TargetFinder::UPDATE_ERROR_SERVICE_NOT_AVAILABLE)
+    {
+        title = @"Service Unavailable";
+        message = @"The cloud recognition service is unavailable, please try again later.";
+    }
+    else if (code == Vuforia::TargetFinder::UPDATE_ERROR_UPDATE_SDK)
+    {
+        title = @"Unsupported Version";
+        message = @"The application is using an unsupported version of Vuforia.";
+    }
+    else if (code == Vuforia::TargetFinder::UPDATE_ERROR_TIMESTAMP_OUT_OF_RANGE)
+    {
+        title = @"Clock Sync Error";
+        message = @"Please update the date and time and try again.";
+    }
+    else if (code == Vuforia::TargetFinder::UPDATE_ERROR_AUTHORIZATION_FAILED)
+    {
+        title = @"Authorization Error";
+        message = @"The cloud recognition service access keys are incorrect or have expired.";
+    }
+    else if (code == Vuforia::TargetFinder::UPDATE_ERROR_PROJECT_SUSPENDED)
+    {
+        title = @"Authorization Error";
+        message = @"The cloud recognition service has been suspended.";
+    }
+    else if (code == Vuforia::TargetFinder::UPDATE_ERROR_BAD_FRAME_QUALITY)
+    {
+        title = @"Poor Camera Image";
+        message = @"The camera does not have enough detail, please try again later";
+    }
+    else
+    {
+        title = @"Unknown error";
+        message = [NSString stringWithFormat:@"An unknown error has occurred (Code %d)", code];
+    }
+    
+    //  Call the UIAlert on the main thread to avoid undesired behaviors
+    dispatch_async( dispatch_get_main_queue(), ^{
+        if (title && message)
+        {
+            
+            UIAlertController *uiAlertController =
+            [UIAlertController alertControllerWithTitle:title
+                                                message:message
+                                         preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertAction *defaultAction =
+            [UIAlertAction actionWithTitle:@"OK"
+                                     style:UIAlertActionStyleDefault
+                                   handler:^(UIAlertAction *action) {
+                                       [[NSNotificationCenter defaultCenter] postNotificationName:@"kDismissARViewController" object:nil];
+                                   }];
+            [uiAlertController addAction:defaultAction];
+            [self presentViewController:uiAlertController animated:YES completion:nil];
+        }
+    });
+}
+
+#pragma mark - scan line
+const int VIEW_SCAN_LINE_TAG = 1111;
+
+- (void) scanlineCreate
+{
+    CGRect frame = [[UIScreen mainScreen] bounds];
+    
+    UIImageView *scanLineView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, frame.size.width, 50)];
+    scanLineView.tag = VIEW_SCAN_LINE_TAG;
+    scanLineView.contentMode = UIViewContentModeScaleToFill;
+    [scanLineView setImage:[UIImage imageNamed:@"scanline.png"]];
+    [scanLineView setHidden:YES];
+    [self.view addSubview:scanLineView];
+}
+
+- (void) scanlineStart
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIView * scanLineView = [self.view viewWithTag:VIEW_SCAN_LINE_TAG];
+        if (scanLineView)
+        {
+            [scanLineView setHidden:NO];
+            CGRect frame = [[UIScreen mainScreen] bounds];
+            scanLineView.frame = CGRectMake(0, 0, frame.size.width, 50);
+            
+            NSLog(@"frame: %@", NSStringFromCGRect(frame));
+            CABasicAnimation *animation = [CABasicAnimation
+                                           animationWithKeyPath:@"position"];
+            
+            animation.toValue = [NSValue valueWithCGPoint:CGPointMake(scanLineView.center.x, frame.size.height)];
+            animation.autoreverses = YES;
+            // we make the animation faster in landcsape mode
+            animation.duration = frame.size.height > frame.size.width ? 4.0 : 2.0;
+            animation.repeatCount = HUGE_VAL;
+            animation.removedOnCompletion = NO;
+            animation.fillMode = kCAFillModeForwards;
+            [scanLineView.layer addAnimation:animation forKey:@"position"];
+        }
+    });
+}
+
+- (void) scanlineStop
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIView * scanLineView = [self.view viewWithTag:VIEW_SCAN_LINE_TAG];
+        if (scanLineView)
+        {
+            [scanLineView setHidden:YES];
+            [scanLineView.layer removeAllAnimations];
+        }
+    });
+}
+
+- (void) scanlineUpdateRotation
+{
+    [self scanlineStop];
+    [self scanlineStart];
+}
+
 
 
 @end
